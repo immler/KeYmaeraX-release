@@ -1,0 +1,56 @@
+﻿ProgramVariables.
+  R t.
+  R x.
+  R y.
+End.
+
+Functions.
+  R x0.
+  R y0.
+  R ex.
+  R ey.
+  R h.
+End.
+
+Problem.
+(
+  x0 = x &
+  y0 = y &
+  t = 0 &
+  ex>0 &
+  ey>0 &
+  (\forall x \forall y \forall t
+    (
+        (0 <= t & t <= h) ->
+        (
+        -ex <
+            x0 + t * (1 + y + ey) &
+            x0 + t * (1 + y + ey)
+            < ex & /* Picard iteration x */
+        -ey <
+            y0 + -ex^2 * t - ex*t^2 - t^3/3 - 2*ex*t*x - t^2*x - t*x^2 - ex*t^2*y - (2*t^3*y)/3 - t^2*x*y - (t^3*y^2)/3 &
+            y0 + -ex^2 * t - ex*t^2 - t^3/3 - 2*ex*t*x - t^2*x - t*x^2 - ex*t^2*y - (2*t^3*y)/3 - t^2*x*y - (t^3*y^2)/3
+            < ey /* Picard iteration y */
+        )
+    )
+  )
+)
+->
+([
+    {x' = 1 + y,
+     y' = -x^2,
+     t' = 1
+     & 0 <= t & t <= h
+    }
+]
+((0 <= t & t <= h) &
+    x-ex <
+        x0 + t + t*y0 &
+        x0 + t + t*y0
+        < x+ex &
+    y-ey <
+        y0 &
+        y0
+        < y+ey)
+)
+End.

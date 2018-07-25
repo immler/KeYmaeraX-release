@@ -1,0 +1,60 @@
+﻿ArchiveEntry "Abstract Model".
+
+ProgramVariables.
+  R t.
+  R x.
+End.
+
+Functions.
+  R f(R).
+  R h.
+  R B.
+  R e.
+End.
+
+Problem.
+( B > 0 &
+  0 < h &
+  x = 0 &
+  t = 0 &
+  e > 0 &
+  (\forall x
+     ((x < h * B + e) ->
+    (f(x) <= B))
+  )
+)
+->
+([
+    {x' = f(x),
+      t' = 1
+      & 0 <= t & t <= h
+    }
+]
+(0 <= t & t <= h & x < B * t + e)
+)
+End.
+
+Tactic "Abstract Model: Proof 1".
+  prop ; useAt({`& associative`}, {`1`}, 1.1) ; boxAnd(1) ; andR(1) ; <(
+  master,
+  DIoless(1) ; <(
+    master,
+    derive(1.1.1.1) ; DEs(1.1) ; Dassignb(1.1.1.1) ; Dassignb(1.1.1) ; implyR(1) ; dW('R) ; prop ; cut({`x < h()*B()+e()`}) ; <(
+      allL({`x`}, -6) ; master,
+      hideL(-6=={`\forall x (x < h()*B()+e()->f(x)<=B())`}) ; hideR(1=={`f(x)<=B()*1+0`}) ; master
+      )
+    )
+  )
+End.
+       
+Tactic "Abstract Model: Proof 2".
+  nil
+End.
+       
+Tactic "Abstract Model: Proof 3".
+  nil
+End.
+       
+
+End.
+       

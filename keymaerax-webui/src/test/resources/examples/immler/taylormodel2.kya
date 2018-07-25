@@ -1,0 +1,42 @@
+﻿ProgramVariables.
+  R t.
+  R x.
+  R y.
+  R xc.
+  R yc.
+End.
+
+Functions.
+  R x0.
+  R y0.
+  R ex.
+  R ey.
+  R h.
+End.
+
+Problem.
+(
+  t = 0 &
+  ex > 0 &
+  ey > 0 &
+)
+->
+([
+    {x' = 1 + y,
+     y' = -x^2,
+     xc' = 1 + yc,
+     yc' = -xc^2,
+     t' = 1
+     & 0 <= t & t <= h
+    }
+]
+(x - ex <
+    x0 + t + t*y0 &
+    x0 + t + t*y0
+        < x+ex &
+    y-ey <
+        y0 &
+        y0
+        < y+ey)
+)
+End.

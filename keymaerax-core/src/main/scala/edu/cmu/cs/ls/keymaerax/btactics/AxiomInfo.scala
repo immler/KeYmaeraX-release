@@ -350,6 +350,27 @@ object DerivationInfo {
     new DerivedAxiomInfo("DIo open differential invariance <"
       , AxiomDisplayInfo("DIo <", "(<span class=\"k4-axiom-key\">[{x′=f(x)&Q}]f(x)<g(x)</span>↔[?Q]f(x)<g(x))←(Q→[{x′=f(x)&Q}](f(x)<g(x)→(f(x)<g(x))′))")
       , "DIoless", {case () => ???}),
+    new CoreAxiomInfo("DIo open differential invariance <2"
+      , AxiomDisplayInfo("DIo <2","todo DIo<2")
+      , "DIoless2", {case () => ???}),
+    new CoreAxiomInfo("DIo open differential invariance <4"
+      , AxiomDisplayInfo("DIo <4","todo DIo<4")
+      , "DIoless4", {case () => ???}),
+    new CoreAxiomInfo("DIo open differential invariance <6"
+      , AxiomDisplayInfo("DIo <6","todo DIo<6")
+      , "DIoless6", {case () => ???}),
+    new CoreAxiomInfo("DIo open differential invariance <8"
+      , AxiomDisplayInfo("DIo <8","todo DIo<8")
+      , "DIoless8", {case () => ???}),
+    new CoreAxiomInfo("DIo open differential invariance <10"
+      , AxiomDisplayInfo("DIo <10","todo DIo<10")
+      , "DIoless10", {case () => ???}),
+    new CoreAxiomInfo("DIo open differential invariance <12"
+      , AxiomDisplayInfo("DIo <12","todo DIo<12")
+      , "DIoless12", {case () => ???}),
+    new CoreAxiomInfo("DIo open differential invariance <14"
+      , AxiomDisplayInfo("DIo <14","todo DIo<14")
+      , "DIoless14", {case () => ???}),
     new CoreAxiomInfo("DV differential variant >="
       , AxiomDisplayInfo("DVgeq", "todo DVgeq")
       , "DVgeq", {case () => ???}),

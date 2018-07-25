@@ -1,0 +1,60 @@
+﻿ArchiveEntry "Taylor Model (1) (Copy 1)".
+
+ProgramVariables.
+  R t.
+  R x.
+  R y.
+End.
+
+Functions.
+  R x0.
+  R y0.
+  R ex.
+  R ey.
+  R h.
+  R e.
+End.
+
+Problem.
+(
+  x0 = x &
+  y0 = y &
+   t = 0 &
+  ex>0&ey>0&e>0&h>0&
+  (\forall t \forall x \forall y
+    (
+      (0<=t&t<=h->x-ex*t/h-e < x0+t+t*y0&x0+t+t*y0 < x+ex*t/h+e&y-ey*(t/h)-e < y0-x0^2*t-x0*t^2-t^3/3&y0-x0^2*t-x0*t^2-t^3/3 < y+ey*(t/h)+e)
+      ->
+      (1+y-ex*h/h^2<=1+y0&1+y0<=1+y+ex*h/h^2&-x^2-ey*(h/h^2)<=-x0^2-x0*(2*t)-3*t^2*3/9&-x0^2-x0*(2*t)-3*t^2*3/9<=-x^2+ey*(h/h^2))
+    )
+  )
+)
+->
+([
+    {x' = 1 + y,
+     y' = -x^2,
+     t' = 1
+     & 0 <= t & t <= h
+    }
+]
+(x-ex*t/h-e <
+        x0 + t + t*y0 &
+        x0 + t + t*y0
+        < x+ex*t/h+e &
+    y-ey*(t/h)-e <
+        y0 - x0^2*t - x0*t^2 - t^3/3 &
+        y0 - x0^2*t - x0*t^2 - t^3/3 
+        < y+ey*(t/h)+e)
+)
+End.
+
+Tactic "Taylor Model (1) (Copy 1): Proof 1".
+  prop ; useAt({`DIo open differential invariance <<<<`}, {`1`}, 1) ; testb(1.0) ; DEs(1.1.1) ; derive(1.1.1.1.1.1.1.1) ; Dassignb(1.1.1.1.1.1) ; Dassignb(1.1.1.1.1) ; Dassignb(1.1.1.1) ; andR(1) ; <(
+  hideL(-8=={`\forall t \forall x \forall y ((0<=t&t<=h()->x-ex()*t/h()-e() < x0()+t+t*y0()&x0()+t+t*y0() < x+ex()*t/h()+e()&y-ey()*(t/h())-e() < y0()-x0()^2*t-x0()*t^2-t^3/3&y0()-x0()^2*t-x0()*t^2-t^3/3 < y+ey()*(t/h())+e())->1+y-ex()*h()/h()^2<=1+y0()&1+y0()<=1+y+ex()*h()/h()^2&-x^2-ey()*(h()/h()^2)<=-x0()^2-x0()*(2*t)-3*t^2*3/9&-x0()^2-x0()*(2*t)-3*t^2*3/9<=-x^2+ey()*(h()/h()^2))`}) ; QE,
+  implyR(1) ; dW('R) ; allL({`t`}, -8) ; allL({`x`}, -8) ; allL({`y`}, -8) ; QE
+  )
+End.
+       
+
+End.
+       

@@ -1,0 +1,54 @@
+﻿ProgramVariables.
+  R t.
+  R x.
+  R y.
+End.
+
+Functions.
+  R x0.
+  R y0.
+  R ex.
+  R ey.
+  R h.
+  R e.
+End.
+
+Problem.
+(
+  x0 = x &
+  y0 = y &
+   t = 0 &
+  ex>0&ey>0&e>0&
+  (\forall t \forall x \forall y
+    (
+    (0 <= t & t <= h &
+       x-ex*t-e < x0+t+t*y0 &
+                  x0+t+t*y0 < x+ex*t+e &
+       y-ey*t-e < y0-x0^2*t-x0*t^2-t^3/3 &
+                  y0-x0^2*t-x0*t^2-t^3/3 < y+ey*t+e) ->
+    (
+      y-ex <= y0 &
+              y0 <= y+ex &
+      -x^2-ey <= -x0^2-x0*(2*t)-3*t^2*3/9 &
+                 -x0^2-x0*(2*t)-3*t^2*3/9 <= -x^2+ey
+    ))
+  )
+)
+->
+([
+    {x' = 1 + y,
+     y' = -x^2,
+     t' = 1
+     & 0 <= t & t <= h
+    }
+]
+(x-ex*t-e <
+        x0 + t + t*y0 &
+        x0 + t + t*y0
+        < x+ex*t+e &
+    y-ey*t-e <
+        y0 - x0^2*t - x0*t^2 - t^3/3 &
+        y0 - x0^2*t - x0*t^2 - t^3/3 
+        < y+ey*t+e)
+)
+End.
