@@ -15,6 +15,9 @@
         <Logger name="edu.cmu.cs.ls.keymaerax.tools.JLinkMathematicaLink" level="info" additivity="false">
             <AppenderRef ref="ConsolePrint"/>
         </Logger>
+        <Logger name="immler.Scratch.Scratch" level="debug" additivity="false">
+            <AppenderRef ref="ConsolePrint"/>
+        </Logger>
         <Root level="error">
             <AppenderRef ref="ConsoleError"/>
         </Root>
