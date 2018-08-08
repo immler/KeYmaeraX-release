@@ -1,58 +1,26 @@
 package immler.Scratch
 import edu.cmu.cs.ls.keymaerax.btactics._
-import edu.cmu.cs.ls.keymaerax._
-import java.io.File
-
-import edu.cmu.cs.ls.keymaerax.bellerophon._
-import edu.cmu.cs.ls.keymaerax.btactics.Augmentors
-import edu.cmu.cs.ls.keymaerax.btactics.Idioms._
-import edu.cmu.cs.ls.keymaerax.btactics.TacticFactory._
-import edu.cmu.cs.ls.keymaerax.core._
-import edu.cmu.cs.ls.keymaerax.btactics.TacticIndex.TacticRecursors
 import edu.cmu.cs.ls.keymaerax.lemma.LemmaDBFactory
-import edu.cmu.cs.ls.keymaerax.parser.KeYmaeraXParser
-import edu.cmu.cs.ls.keymaerax.pt.ProvableSig
-import edu.cmu.cs.ls.keymaerax.tools.{SimplificationTool, ToolOperationManagement}
 import org.apache.logging.log4j.scala.Logger
-import edu.cmu.cs.ls.keymaerax.parser.StringConverter._
-import edu.cmu.cs.ls.keymaerax.btactics.helpers
 import edu.cmu.cs.ls.keymaerax.bellerophon._
-import edu.cmu.cs.ls.keymaerax.btactics.TactixLibrary._
-import edu.cmu.cs.ls.keymaerax.btactics.Augmentors._
-import edu.cmu.cs.ls.keymaerax.btactics.DerivedAxioms.derivedRule
+import edu.cmu.cs.ls.keymaerax.btactics.DerivationInfo.useAt
+import edu.cmu.cs.ls.keymaerax.btactics.DerivedAxioms.derivedAxiom
+import edu.cmu.cs.ls.keymaerax.btactics.TactixLibrary.{useAt, _}
 import edu.cmu.cs.ls.keymaerax.core._
-import edu.cmu.cs.ls.keymaerax.hydra.DbProofTree
-import edu.cmu.cs.ls.keymaerax.parser.KeYmaeraXProblemParser
 import edu.cmu.cs.ls.keymaerax.parser.StringConverter._
-import edu.cmu.cs.ls.keymaerax.pt.ProvableSig
-import edu.cmu.cs.ls.keymaerax.tags.{CheckinTest, SummaryTest, UsualTest}
-import edu.cmu.cs.ls.keymaerax.tools.{HashEvidence, ToolEvidence}
+import edu.cmu.cs.ls.keymaerax.tools.ToolEvidence
 
-import java.security.MessageDigest
-
-import edu.cmu.cs.ls.keymaerax.Configuration
-import edu.cmu.cs.ls.keymaerax.btactics.{AxiomInfo, DerivationInfo, DerivedAxiomInfo, DerivedRuleInfo}
-import edu.cmu.cs.ls.keymaerax.parser.{FullPrettyPrinter, KeYmaeraXExtendedLemmaParser}
-import edu.cmu.cs.ls.keymaerax.pt._
-import edu.cmu.cs.ls.keymaerax.tools.{HashEvidence, ToolEvidence}
-
-// require favoring immutable Seqs for unmodifiable Lemma evidence
-
-import scala.collection.immutable
-import scala.collection.immutable._
-import scala.collection.immutable.IndexedSeq
 import scala.language.postfixOps
-import org.scalatest.LoneElement._
-
 import scala.collection.immutable.{List, _}
 import edu.cmu.cs.ls.keymaerax.btactics.helpers.DifferentialHelper
-import edu.cmu.cs.ls.keymaerax.btactics.helpers.DifferentialHelper.{lieDerivative, simpWithTool, stripConstants, stripPowZero}
-import org.scalatest.{FlatSpec, Matchers}
-import scala.collection.{immutable, mutable}
+import edu.cmu.cs.ls.keymaerax.btactics.helpers.DifferentialHelper.{simpWithTool, stripConstants}
+
 import scala.collection.immutable._
 
 class Scratch extends TacticTestBase {
 
+  private val logger = Logger(getClass)
+  
   def summands(t: Term): List[Term] = t match {
     case t: Plus => t.right::summands(t.left)
     case x: Term => List(x)
@@ -180,7 +148,7 @@ class Scratch extends TacticTestBase {
     val time = getTime(ode)
     val vars = DifferentialHelper.getPrimedVariables(ode)
     val state = vars.filterNot(_ == time)
-    def const(n: String) = FuncOf(Function(n, None, Unit, Real), Nothing)
+    def const(n: String) = FuncOf(Function(n + "_", None, Unit, Real), Nothing)
     val istate = vars map (x => const(x.name + "0")) // TODO: should be fresh?!
     val tm = TaylorModel(ode, state, time, order)
     val tm0 = tm map (substitutes (state zip state))
@@ -201,7 +169,7 @@ class Scratch extends TacticTestBase {
     val initial_condition = Equal(time,Number(0))::(state zip istate map (x => Equal(x._1, x._2)))
     def mk_stmt(assms: List[Formula]) =
       Imply((pos_preconds:::initial_condition:::assms) reduceRight And, Box(ODESystem(ode, And(LessEqual(Number(0), time), LessEqual(time, step_size))),bounds))
-    System.out.println(mk_stmt(Nil))
+    logger.debug(mk_stmt(Nil))
     val res = proveBy(mk_stmt(Nil),
       implyR(1)
         & useAt("DIo open differential invariance <" + (state.size * 2).toString)(1)
@@ -216,10 +184,10 @@ class Scratch extends TacticTestBase {
       ))
     def quantify(vars: List[Variable], fm: Formula) = vars.foldRight(fm)((x, fm) => Forall(x::Nil, fm))
     val assumption = quantify(time::state, res.subgoals(0).succ(0))
-
-    System.out.println("x")
-    System.out.println(assumption)
-    System.out.println("-x")
+    
+    logger.debug("x")
+    logger.debug(assumption)
+    logger.debug("-x")
     val proved = proveBy(mk_stmt(assumption::Nil),
         implyR(1)
           & useAt("DIo open differential invariance <" + (state.size * 2).toString)(1)
@@ -233,22 +201,92 @@ class Scratch extends TacticTestBase {
             & SimplifierV2.fullSimpTac
             & QE()
         ))
-    // see Lemma.scala!
-    val lemmaDB = LemmaDBFactory.lemmaDB
+
+    // see Lemma.scala, also for storing Lemmas in the Database
+    // (probably I don't want this, rather locally, for some TM cache in several steps?)
     val evidence = ToolEvidence(("input",proved.toString)::("output", "true")::Nil)::Nil
-    val lemmaID = lemmaDB.add(Lemma(proved, evidence, Some("TM Lemma")))
-    lemmaID
+    Lemma(proved, evidence, None)
+  }
+
+  /*
+  * P(x) -> (\forall x (Q(x) -> [{{x'=f(x) & Q(x)}}*]P(x))) -> [{x'=f(x) & Q(x)}]P(x)
+  * P(x) -> (\forall x (Q(x) -> [{{x'=f(x) & Q(x)}}]P(x))) -> [{x'=f(x) & Q(x)}]P(x)
+  * P(x) -> [{{x'=f(x) & Q(x)}; {x'=f(x) & Q(x)}}]P(x) -> [{x'=f(x) & Q(x)}]P(x)
+  * [{{x'=f(x) & Q(x) & (J(x))}; ?J(x); {x' = f(x) & Q(x)}}]P(x) -> [{x'=f(x) & Q(x)}]P(x)
+  *
+  * [{x'=f(x) & Q(x)}]P(x) -> [{x'=f(x) & Q(x)}]P(x)
+  * [{x'=f(x) & Q(x)}][{{x'=f(x) & Q(x)}}*]P(x) -> [{x'=f(x) & Q(x)}]P(x)
+  *
+  * IDEE: prepend cut invariant R and jump condition J :
+  * P(x) -> [{{x'=f(x) & Q(x) & R(x)}; ?J(x);}][{{x'=f(x) & Q(x)}}]P(x) -> [{x'=f(x) & Q(x)}]P(x)
+  * */
+  def cutTaylorModelTac(): BelleExpr = skip
+
+/*
+* Scratch: [{x'=f(x),t'=1&true}]P((t,x)) <->
+*       [{{x'=f(x),t'=1 & true};?(0<=t&t<=h)}++{{x'=f(x),t'=1 & true};?(t>=h)}]P((t,x))
+*       [{{x'=f(x),t'=1 & true};?(0<=t&t<=h);}++{{x'=f(x),t'=1 & true};?(t>=h);}]P((t,x))
+*       [{{x'=f(x),t'=1 & true}}++{{x'=f(x),t'=1 & true}}]P((t,x))
+*       [{x'=f(x),t'=1&t>=0}]P((t,x))<->[{x'=f(x),t'=1&t>=0}?0<=t&t<=h;++{x'=f(x),t'=1&t>=0}?t>=h;]P((t,x))
+*
+*     [{{x'=f(x),t'=1 &t>=0}; ?((0<=t&t<=h)|t>=h);}]P((t,x))
+*
+*     [{{x'=f(x),t'=1 &t>=0} {?(t<=h)++{?(t=h); {x'=f(x),t'=1 &t>=0}}}]P((t,x))
+*
+*     [{{x'=f(x),t'=1 &t>=0} {?(t<=h);++{?(t=h); {x'=f(x),t'=1 &t>=0}}}}]P((t,x))
+*     [{{x'=f(x),t'=1 &true} {x'=f(x),t'=1 &true}]P((t,x))
+* */
+
+  def odeStep(fml: Formula) = NamedTactic("ANON",
+      useAt(DerivedAxioms.loopApproxb, PosInExpr(1::Nil))(1)
+    & iterateb(1)
+    & andR(1) & Idioms.<(skip /* precondition 1, left to user */,
+        dC(fml)(1))
+  )
+
+  "Lemma" should "be tried" in {
+    val flow = "[{x' = 1 + y, y' = - x^2, t' = 1 & D(x, y, t)}]P(x, y, t)".asFormula
+    val step = "0<=t & t <= h".asFormula
+
+    val result = proveBy(flow, odeStep(step))
+    logger.debug(result)
+
+    val result2 = proveBy(("[{x' = 1 + y, y' = - x^2, t' = 1 & D(x, y, t)} ?t>=h;]P(x, y, t) <- [{x' = 1 + y, y' = - x^2, t' = 1 & D(x, y, t)} ?t=h; {x' = 1 + y, y' = - x^2, t' = 1 & D(x, y, t)}]P(x, y, t)").asFormula,
+      skip)
+    logger.debug(result2)
+
+  }
+
+
+  "Taylor model" should "be cut" in withMathematica { _ =>
+    val result = proveBy("[{x' = 1 + y, y' = - x^2, t' = 1}]P(x, y, t)".asFormula, cutTaylorModelTac())
+    val x = "[{{x'=f(x),t'=1 &t>=0} {?(t<=h);++{?(t=h); {x'=f(x),t'=1 &t>=0}}}}]P((t,x))".asFormula
+    /* Step 1: do a step!
+    * Try this as a cut: t=0->([{{x'=f(x),t'=1}}]P(t, x)<->(([{{x'=f(x),t'=1}}](0<=t&t<=h->P(t, x)))& ((t=h&P(t, x))-> ([{{x'=f(x),t'=1}}]P(t, x)))))
+    *
+    * [expr]P(t) <->
+    * [ode]P(t) <-> ([ode](0<=t<=h -> P(t)) & ((t = h & P h) -> [ode](t > h -> P(t))))
+    *               ([ode&0<=t<=h]P(t)) &
+    * P for unbounded time <-> [ode](0<=t<=h -> P t) & [ode](t > h -> P t)
+    * */
+    logger.debug(result)
   }
 
   "Taylor model lemma" should "be created" in withMathematica { _ =>
-    val lemmaID = createTaylorModelLemma("{x' = 1 + y, y' = - x^2, t' = 1}".asDifferentialProgram, 1)
-    System.out.println(lemmaID)
+    val lemma = createTaylorModelLemma("{x' = 1 + y, y' = - x^2, t' = 1}".asDifferentialProgram, 1)
+    val lemmaDB = LemmaDBFactory.lemmaDB
+    val lemmaID = lemmaDB.add(lemma)
+    lemmaID
+    logger.debug(lemmaID)
     val lemmaFact = LemmaDBFactory.lemmaDB.get(lemmaID).get.fact
-    System.out.println(lemmaFact)
+    logger.debug(lemmaFact)
     // use a lemma literally
     TactixLibrary.by(lemmaFact)
     // use a uniform substitution instance of a lemma
     TactixLibrary.byUS(lemmaFact)
 
+    //
+
   }
+
 }
